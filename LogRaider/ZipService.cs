@@ -4,7 +4,6 @@ using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace LogRaider
@@ -28,7 +27,10 @@ namespace LogRaider
             {
                 foreach (var logFile in logFiles)
                 {
-                    zipArchive.CreateEntryFromFile(logFile.FullName, logFile.Name, CompressionLevel.Optimal);
+                    if (zipArchive.Entries.All(e => e.FullName != logFile.Name))
+                    {
+                        zipArchive.CreateEntryFromFile(logFile.FullName, logFile.Name, CompressionLevel.Optimal);
+                    }
                 }
             }
 
