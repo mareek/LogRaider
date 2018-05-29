@@ -37,8 +37,24 @@ namespace LogRaider
                 if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
                 {
                     txtFolder.Text = dialog.FileName;
-                    await ExecuteLongAction(() => ShowAnalysisResult(new DirectoryInfo(txtFolder.Text), new MemoryAnalysis()));
+                    await ExecuteLongAction(() => ShowAnalysisResult(new DirectoryInfo(txtFolder.Text), GetAnalysis()));
                 }
+            }
+        }
+
+        private ILogAnalysis GetAnalysis()
+        {
+            if (radioMemoryAnalysis.IsChecked.GetValueOrDefault())
+            {
+                return new MemoryAnalysis();
+            }
+            else if (radioSearchAnalysis.IsChecked.GetValueOrDefault())
+            {
+                return new SimpleTextSearchAnalysis(txtSearch.Text);
+            }
+            else
+            {
+                throw new ArgumentOutOfRangeException("aucune analyse sélectionnée");
             }
         }
 

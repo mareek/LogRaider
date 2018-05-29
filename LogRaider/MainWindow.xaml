@@ -15,6 +15,17 @@
                 <Button Name="btnSelectFolder" DockPanel.Dock="Right" Margin="3" Click="btnSelectFolder_Click">...</Button>
                 <TextBox Name="txtFolder" Margin="3" IsReadOnly="True"/>
             </DockPanel>
+            <GroupBox Header="Analyse">
+                <StackPanel>
+                    <RadioButton Name="radioMemoryAnalysis" IsChecked="True">Memoire</RadioButton>
+                    <RadioButton Name="radioSearchAnalysis" HorizontalContentAlignment="Stretch">
+                        <DockPanel>
+                            <TextBlock VerticalAlignment="Center">Recherche :</TextBlock>
+                            <TextBox Name="txtSearch" IsEnabled="{Binding ElementName=radioSearchAnalysis, Path=IsChecked}"/>
+                        </DockPanel>
+                    </RadioButton>
+                </StackPanel>
+            </GroupBox>
             <Label>Console :</Label>
             <TextBox Name="txtConsole" FontFamily="Consolas" VerticalScrollBarVisibility="Visible" Height="60" />
             <Label>Output :</Label>

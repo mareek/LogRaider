@@ -11,7 +11,17 @@ namespace LogRaider.Analysis
 
         public string Name => $"recherche de '{_searchTerm}'";
 
-        public string AnalyseLogs(IEnumerable<LogEntry> logEntries) => string.Join("\r\n", logEntries.Select(l => l.DateTime.ToString("s")).Distinct().OrderBy(l => l));
+        public string AnalyseLogs(IEnumerable<LogEntry> logEntries)
+        {
+            if (string.IsNullOrWhiteSpace(_searchTerm))
+            {
+                return "Aucun terme sélectionné";
+            }
+            else
+            {
+                return CountResult.FormatResult(logEntries.GroupBy(l => l.DateTime.Date).OrderBy(g => g.Key).Select(CountResult.FromGrouping).ToList());
+            }
+        }
 
         public bool Filter(LogEntry logEntry) => logEntry.Message.Contains(_searchTerm);
     }
