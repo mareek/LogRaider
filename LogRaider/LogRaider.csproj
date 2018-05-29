@@ -105,6 +105,7 @@
     <Compile Include="Analysis\ExceptionByDateAnalysis.cs" />
     <Compile Include="Analysis\ILogAnalysis.cs" />
     <Compile Include="Analysis\MemoryAnalysis.cs" />
+    <Compile Include="Analysis\SimpleTextSearchAnalysis.cs" />
     <Compile Include="ZipService.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
