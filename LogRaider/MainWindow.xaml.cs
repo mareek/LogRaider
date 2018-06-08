@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -28,7 +26,7 @@ namespace LogRaider
             txtFolder.Text = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
         }
 
-        private async void btnSelectFolder_Click(object sender, RoutedEventArgs e)
+        private void btnSelectFolder_Click(object sender, RoutedEventArgs e)
         {
             using (var dialog = new CommonOpenFileDialog())
             {
@@ -37,10 +35,13 @@ namespace LogRaider
                 if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
                 {
                     txtFolder.Text = dialog.FileName;
-                    await ExecuteLongAction(() => ShowAnalysisResult(new DirectoryInfo(txtFolder.Text), GetAnalysis()));
                 }
             }
         }
+
+        private async void btnLaunch_Click(object sender, RoutedEventArgs e) => await ExecuteAnalysis();
+
+        private Task ExecuteAnalysis() => ExecuteLongAction(() => ShowAnalysisResult(new DirectoryInfo(txtFolder.Text), GetAnalysis()));
 
         private ILogAnalysis GetAnalysis()
         {

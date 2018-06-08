@@ -26,6 +26,7 @@
                     </RadioButton>
                 </StackPanel>
             </GroupBox>
+            <Button Name="btnLaunch" Click="btnLaunch_Click">Launch Analysis</Button>
             <Label>Console :</Label>
             <TextBox Name="txtConsole" FontFamily="Consolas" VerticalScrollBarVisibility="Visible" Height="60" />
             <Label>Output :</Label>
