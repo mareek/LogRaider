@@ -56,7 +56,13 @@ namespace LogRaider
         }
 
         //05-02-2018 08:19:33,226 [268  ] DEBUG   Business.Managers.PricingManager         [PutPricingResultInCache            ] *MRB     * Mise en cache d'un PricingResult 225540 sous le nom PricingResult_225540_F_F_True_True_False.
-        private DateTime GetDateTime() => DateTime.ParseExact(_firstLine.Substring(0, 23), "dd-MM-yyyy HH:mm:ss,fff", CultureInfo.InvariantCulture);
+        private DateTime GetDateTime()
+        {
+            //Some log files use a space char as a separator between the date and time while others have a tab char. 
+            //trick courtesy of stackOverflow : https://stackoverflow.com/questions/23198922/datetime-parseexact-ignore-first-char-c-sharp
+            string dateFormat = $"dd-MM-yyyy{_firstLine[10]}HH:mm:ss,fff";
+            return DateTime.ParseExact(_firstLine.Substring(0, 23), dateFormat, CultureInfo.InvariantCulture);
+        }
 
         private int GetThread() => int.Parse(GetTrimedFirstLineSubString(25, 5));
 
