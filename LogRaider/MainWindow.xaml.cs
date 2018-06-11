@@ -51,7 +51,7 @@ namespace LogRaider
             }
             else if (radioSearchAnalysis.IsChecked.GetValueOrDefault())
             {
-                return new SimpleTextSearchAnalysis(txtSearch.Text);
+                return new SimpleTextSearchAnalysis(txtSearch.Text, chkFullMessageSearch.IsChecked.GetValueOrDefault());
             }
             else
             {

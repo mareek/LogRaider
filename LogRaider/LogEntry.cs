@@ -22,6 +22,8 @@ namespace LogRaider
 
         public string Message { get; }
 
+        public IEnumerable<string> OtherLines => _otherLines.AsReadOnly();
+
         public LogEntry(string firstLine)
         {
             _firstLine = firstLine;

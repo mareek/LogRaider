@@ -21,7 +21,8 @@
                     <RadioButton Name="radioSearchAnalysis" HorizontalContentAlignment="Stretch">
                         <DockPanel>
                             <TextBlock VerticalAlignment="Center">Recherche :</TextBlock>
-                            <TextBox Name="txtSearch" IsEnabled="{Binding ElementName=radioSearchAnalysis, Path=IsChecked}"/>
+                            <CheckBox Name="chkFullMessageSearch" DockPanel.Dock="Right" VerticalAlignment="Center">Chercher dans tout le message</CheckBox>
+                            <TextBox Name="txtSearch" IsEnabled="{Binding ElementName=radioSearchAnalysis, Path=IsChecked}" Margin="5 0"/>
                         </DockPanel>
                     </RadioButton>
                 </StackPanel>
