@@ -35,6 +35,7 @@ namespace LogRaider
                 if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
                 {
                     txtFolder.Text = dialog.FileName;
+                    btnLaunch.Focus();
                 }
             }
         }

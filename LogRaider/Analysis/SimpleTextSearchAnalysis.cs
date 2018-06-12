@@ -8,16 +8,18 @@ namespace LogRaider.Analysis
 {
     public class SimpleTextSearchAnalysis : ILogAnalysis
     {
+        private readonly string _originalSearchTerm;
         private readonly string _searchTerm;
         private readonly bool _fullMessageSearch;
 
         public SimpleTextSearchAnalysis(string searchTerm, bool fullMessageSearch)
         {
+            _originalSearchTerm = searchTerm;
             _searchTerm = RemoveDiacritics(searchTerm);
             _fullMessageSearch = fullMessageSearch;
         }
 
-        public string Name => $"recherche de '{_searchTerm}'";
+        public string Name => $"recherche de '{_originalSearchTerm}'";
 
         public string AnalyseLogs(IEnumerable<LogEntry> logEntries)
         {

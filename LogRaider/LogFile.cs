@@ -3,18 +3,21 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Text;
 
 namespace LogRaider
 {
     public class LogFile
     {
+        private static readonly Encoding DefaultEncoding = Encoding.GetEncoding("ISO-8859-1");
+
         private readonly FileInfo _file;
 
         public LogFile(FileInfo file) => _file = file;
 
         private bool IsZipFile() => ZipService.IsZipFile(_file);
 
-        public IEnumerable<LogEntry> Read(Func<LogEntry, bool> filter ) => IsZipFile() ? ReadZipLogFile(filter ) : ReadNonZipLogFile(filter);
+        public IEnumerable<LogEntry> Read(Func<LogEntry, bool> filter) => IsZipFile() ? ReadZipLogFile(filter) : ReadNonZipLogFile(filter);
 
         private IEnumerable<LogEntry> ReadZipLogFile(Func<LogEntry, bool> filter)
         {
@@ -22,12 +25,9 @@ namespace LogRaider
             {
                 foreach (var zipEntry in zipArchive.Entries)
                 {
-                    using (var zipStream = new StreamReader(zipEntry.Open()))
+                    foreach (var logEntry in ReadLogStream(zipEntry.Open()).Where(filter))
                     {
-                        foreach (var logEntry in ReadLogStream(zipStream).Where(filter))
-                        {
-                            yield return logEntry;
-                        }
+                        yield return logEntry;
                     }
                 }
             }
@@ -35,12 +35,9 @@ namespace LogRaider
 
         private IEnumerable<LogEntry> ReadNonZipLogFile(Func<LogEntry, bool> filter)
         {
-            using (var streamReader = _file.OpenText())
+            foreach (var logEntry in ReadLogStream(_file.OpenRead()).Where(filter))
             {
-                foreach (var logEntry in ReadLogStream(streamReader).Where(filter))
-                {
-                    yield return logEntry;
-                }
+                yield return logEntry;
             }
         }
 
@@ -54,29 +51,32 @@ namespace LogRaider
             }
         }
 
-        private static IEnumerable<LogEntry> ReadLogStream(StreamReader streamReader)
+        private static IEnumerable<LogEntry> ReadLogStream(Stream stream)
         {
-            if (streamReader.EndOfStream)
+            using (var streamReader = new StreamReader(stream, DefaultEncoding))
             {
-                yield break;
-            }
-
-            var currentLogLine = new LogEntry(streamReader.ReadLine());
-            while (!streamReader.EndOfStream)
-            {
-                var currentLine = streamReader.ReadLine();
-                if (LogEntry.IsLogLine(currentLine))
+                if (streamReader.EndOfStream)
                 {
-                    yield return currentLogLine;
-                    currentLogLine = new LogEntry(currentLine);
+                    yield break;
                 }
-                else
-                {
-                    currentLogLine.AddLine(currentLine);
-                }
-            }
 
-            yield return currentLogLine;
+                var currentLogLine = new LogEntry(streamReader.ReadLine());
+                while (!streamReader.EndOfStream)
+                {
+                    var currentLine = streamReader.ReadLine();
+                    if (LogEntry.IsLogLine(currentLine))
+                    {
+                        yield return currentLogLine;
+                        currentLogLine = new LogEntry(currentLine);
+                    }
+                    else
+                    {
+                        currentLogLine.AddLine(currentLine);
+                    }
+                }
+
+                yield return currentLogLine;
+            }
         }
     }
 }
