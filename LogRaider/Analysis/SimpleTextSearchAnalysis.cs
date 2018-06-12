@@ -1,5 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Text;
 
 namespace LogRaider.Analysis
 {
@@ -10,7 +13,7 @@ namespace LogRaider.Analysis
 
         public SimpleTextSearchAnalysis(string searchTerm, bool fullMessageSearch)
         {
-            _searchTerm = searchTerm;
+            _searchTerm = RemoveDiacritics(searchTerm);
             _fullMessageSearch = fullMessageSearch;
         }
 
@@ -28,7 +31,30 @@ namespace LogRaider.Analysis
             }
         }
 
-        public bool Filter(LogEntry logEntry) => logEntry.Message.Contains(_searchTerm)
-                                                 || _fullMessageSearch && logEntry.OtherLines.Any(l => l.Contains(_searchTerm));
+        public bool Filter(LogEntry logEntry) => ContainsTextSeached(logEntry.Message)
+                                                 || _fullMessageSearch && logEntry.OtherLines.Any(ContainsTextSeached);
+
+        private bool ContainsTextSeached(string input) => RemoveDiacritics(input).IndexOf(_searchTerm, StringComparison.OrdinalIgnoreCase) >= 0;
+
+        /// <summary>
+        /// Remove the diacritics (é->e, ç->c, ä->a, etc.) from a string
+        /// Code courtesy of the late Michael Kaplan : http://archives.miloush.net/michkap/archive/2007/05/14/2629747.html
+        /// </summary>
+        static string RemoveDiacritics(string stIn)
+        {
+            string stFormD = stIn.Normalize(NormalizationForm.FormD);
+            StringBuilder sb = new StringBuilder();
+
+            for (int ich = 0; ich < stFormD.Length; ich++)
+            {
+                UnicodeCategory uc = CharUnicodeInfo.GetUnicodeCategory(stFormD[ich]);
+                if (uc != UnicodeCategory.NonSpacingMark)
+                {
+                    sb.Append(stFormD[ich]);
+                }
+            }
+
+            return (sb.ToString().Normalize(NormalizationForm.FormC));
+        }
     }
 }

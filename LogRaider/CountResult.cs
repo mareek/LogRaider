@@ -31,6 +31,7 @@ namespace LogRaider
             }
 
             var maxValue = countResults.Max(c => c.Count);
+            var total = countResults.Sum(c => c.Count);
 
             var valueLegnth = maxValue.ToString().Length;
             var labelLength = Math.Min(countResults.Max(c => c.Label.Length), maxLabelLength);
@@ -40,7 +41,8 @@ namespace LogRaider
             string formatCount(CountResult cr) => cr.Count.ToString().PadLeft(valueLegnth);
             string formatBar(CountResult cr) => (maxValue == 0) ? "" : new string('-', barLength * cr.Count / maxValue);
 
-            return string.Join("\r\n", countResults.Select(cr => $"{formatLabel(cr)} : { formatCount(cr)} |{formatBar(cr)}|"));
+            var formatedCountResults = countResults.Select(cr => $"{formatLabel(cr)} : { formatCount(cr)} |{formatBar(cr)}|");
+            return string.Join("\r\n", formatedCountResults.Append($"Total: {total}"));
         }
     }
 }
