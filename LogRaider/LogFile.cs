@@ -15,6 +15,10 @@ namespace LogRaider
 
         public LogFile(FileInfo file) => _file = file;
 
+        public static bool IsLogFile(FileInfo file) => IsLogFile(file.Name);
+
+        private static bool IsLogFile(string fileName) => fileName.Split('.').LastOrDefault()?.StartsWith("log", StringComparison.OrdinalIgnoreCase) ?? false;
+
         private bool IsZipFile() => ZipService.IsZipFile(_file);
 
         public IEnumerable<LogEntry> Read(Func<LogEntry, bool> filter) => IsZipFile() ? ReadZipLogFile(filter) : ReadNonZipLogFile(filter);
@@ -23,7 +27,7 @@ namespace LogRaider
         {
             using (var zipArchive = ZipFile.OpenRead(_file.FullName))
             {
-                foreach (var zipEntry in zipArchive.Entries)
+                foreach (var zipEntry in GetLogEntries(zipArchive))
                 {
                     foreach (var logEntry in ReadLogStream(zipEntry.Open()).Where(filter))
                     {
@@ -47,9 +51,11 @@ namespace LogRaider
         {
             using (var zipArchive = ZipFile.OpenRead(_file.FullName))
             {
-                return zipArchive.Entries.Sum(e => e.Length);
+                return GetLogEntries(zipArchive).Sum(e => e.Length);
             }
         }
+
+        private static IEnumerable<ZipArchiveEntry> GetLogEntries(ZipArchive zipArchive) => zipArchive.Entries.Where(e => IsLogFile(e.Name));
 
         private static IEnumerable<LogEntry> ReadLogStream(Stream stream)
         {

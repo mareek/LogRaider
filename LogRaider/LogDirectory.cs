@@ -13,7 +13,9 @@ namespace LogRaider
 
         public LogDirectory(DirectoryInfo directory) => _directory = directory;
 
-        private IEnumerable<LogFile> GetLogFiles() => _directory.EnumerateFiles().Select(f => new LogFile(f));
+        private IEnumerable<LogFile> GetLogFiles() => from file in _directory.EnumerateFiles()
+                                                      where LogFile.IsLogFile(file) || ZipService.IsZipFile(file)
+                                                      select new LogFile(file);
 
         public long GetSize() => GetLogFiles().Sum(f => f.GetLogFileSize());
 
