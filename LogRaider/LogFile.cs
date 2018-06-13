@@ -21,27 +21,20 @@ namespace LogRaider
 
         private bool IsZipFile() => ZipService.IsZipFile(_file);
 
-        public IEnumerable<LogEntry> Read(Func<LogEntry, bool> filter) => IsZipFile() ? ReadZipLogFile(filter) : ReadNonZipLogFile(filter);
+        public IEnumerable<LogEntry> Read(Func<LogEntry, bool> filter) => Read().Where(filter);
 
-        private IEnumerable<LogEntry> ReadZipLogFile(Func<LogEntry, bool> filter)
+        private IEnumerable<LogEntry> Read() => IsZipFile() ? ReadZipLogFile() : ReadNonZipLogFile();
+
+        private IEnumerable<LogEntry> ReadNonZipLogFile() => ReadLogStream(_file.OpenRead());
+
+        private IEnumerable<LogEntry> ReadZipLogFile()
         {
             using (var zipArchive = ZipFile.OpenRead(_file.FullName))
             {
-                foreach (var zipEntry in GetLogEntries(zipArchive))
+                foreach (var logEntry in GetLogEntries(zipArchive).SelectMany(e => ReadLogStream(e.Open())))
                 {
-                    foreach (var logEntry in ReadLogStream(zipEntry.Open()).Where(filter))
-                    {
-                        yield return logEntry;
-                    }
+                    yield return logEntry;
                 }
-            }
-        }
-
-        private IEnumerable<LogEntry> ReadNonZipLogFile(Func<LogEntry, bool> filter)
-        {
-            foreach (var logEntry in ReadLogStream(_file.OpenRead()).Where(filter))
-            {
-                yield return logEntry;
             }
         }
 
