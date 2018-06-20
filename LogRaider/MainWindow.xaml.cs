@@ -54,6 +54,10 @@ namespace LogRaider
             {
                 return new SimpleTextSearchAnalysis(txtSearch.Text, chkFullMessageSearch.IsChecked.GetValueOrDefault());
             }
+            else if (radioCalculArenhAnalysis.IsChecked.GetValueOrDefault())
+            {
+                return new CalculArenhAnalysis();
+            }
             else
             {
                 throw new ArgumentOutOfRangeException("aucune analyse sélectionnée");
@@ -73,10 +77,25 @@ namespace LogRaider
 
             var chronoTraitement = Stopwatch.StartNew();
             var logDirectory = new LogDirectory(directory);
-            txtOutput.Text = await Task.Run(() => analysis.AnalyseLogs(logDirectory.ReadParallel(analysis.Filter)));
+            txtOutput.Text = await Task.Run(() => AnalyseDirectory(analysis, logDirectory));
             chronoTraitement.Stop();
             WriteLineToConsole($"Temps de calcul : {chronoTraitement.Elapsed}");
             WriteLineToConsole($"Taille totale des logs : {logDirectory.GetSize() / (1024 * 1024)} MB");
+        }
+
+        private static string AnalyseDirectory(ILogAnalysis analysis, LogDirectory logDirectory)
+        {
+            IEnumerable<LogEntry> logEntries;
+            if (analysis.CanBeParalelyzed)
+            {
+                logEntries = logDirectory.ReadParallel(analysis.Filter);
+            }
+            else
+            {
+                logEntries = logDirectory.ReadSequential(analysis.Filter);
+            }
+
+            return analysis.AnalyseLogs(logEntries);
         }
 
         private void WriteLineToConsole(string line)

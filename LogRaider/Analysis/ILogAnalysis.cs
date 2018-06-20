@@ -10,6 +10,8 @@ namespace LogRaider.Analysis
     {
         string Name { get; }
 
+        bool CanBeParalelyzed { get; }
+
         string AnalyseLogs(IEnumerable<LogEntry> logEntries);
 
         bool Filter(LogEntry logEntry);

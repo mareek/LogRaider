@@ -11,6 +11,8 @@ namespace LogRaider.Analysis
     {
         public string Name => "Analyse mémoire";
 
+        public bool CanBeParalelyzed => true;
+
         public bool Filter(LogEntry logEntry) => MemoryEntry.IsMemoryEntry(logEntry);
 
         public string AnalyseLogs(IEnumerable<LogEntry> logEntries)

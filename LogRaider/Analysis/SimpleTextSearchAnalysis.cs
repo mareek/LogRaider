@@ -21,6 +21,8 @@ namespace LogRaider.Analysis
 
         public string Name => $"recherche de '{_originalSearchTerm}'";
 
+        public bool CanBeParalelyzed => true;
+
         public string AnalyseLogs(IEnumerable<LogEntry> logEntries)
         {
             if (string.IsNullOrWhiteSpace(_searchTerm))

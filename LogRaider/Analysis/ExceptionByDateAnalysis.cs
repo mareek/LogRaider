@@ -10,6 +10,8 @@ namespace LogRaider.Analysis
     {
         public string Name => $"{_exceptionName} par jour";
 
+        public bool CanBeParalelyzed => true;
+
         private readonly string _exceptionName;
 
         public ExceptionByDateAnalysis(string exceptionName)

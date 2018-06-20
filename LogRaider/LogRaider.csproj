@@ -102,6 +102,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Analysis\CalculArenhAnalysis.cs" />
     <Compile Include="Analysis\ExceptionByDateAnalysis.cs" />
     <Compile Include="Analysis\ILogAnalysis.cs" />
     <Compile Include="Analysis\MemoryAnalysis.cs" />

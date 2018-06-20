@@ -66,7 +66,7 @@ namespace LogRaider
             return DateTime.ParseExact(_firstLine.Substring(0, 23), dateFormat, CultureInfo.InvariantCulture);
         }
 
-        private int GetThread() => int.Parse(GetTrimedFirstLineSubString(25, 5));
+        public int GetThread() => int.Parse(GetTrimedFirstLineSubString(25, 5));
 
         public bool IsLevel(string level) => _firstLine.Substring(LevelOffset, LevelLength).StartsWith(level, StringComparison.Ordinal);
 
