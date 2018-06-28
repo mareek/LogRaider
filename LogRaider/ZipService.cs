@@ -13,7 +13,7 @@ namespace LogRaider
     {
         public long CompressDirectoryParallel(DirectoryInfo logDirectory)
         {
-            long zipedFileSize = 0; ;
+            long zipedFileSize = 0L;
             var filesByArchive = logDirectory.EnumerateFiles().Where(IsArchiveLogFile).GroupBy(GetArchivePath);
             Parallel.ForEach(filesByArchive,
                              () => 0L,
@@ -25,7 +25,7 @@ namespace LogRaider
 
         private long AddFilesToArchiveAndDelete(FileInfo archiveFile, IList<FileInfo> logFiles)
         {
-            long zipedFileSize = 0;
+            long zipedFileSize = 0L;
             if (!archiveFile.Exists)
             {
                 CreateArchive(archiveFile);

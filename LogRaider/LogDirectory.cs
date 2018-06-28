@@ -57,9 +57,9 @@ namespace LogRaider
 
         private long DownloadFromDirectory()
         {
-            long downloadSize = 0;
+            long downloadSize = 0L;
             var sourceDirectory = new DirectoryInfo(_conf.Source.Path);
-            foreach (var logFile in GetFilesToDownload(sourceDirectory, _conf.LastDownloadDate, _conf.FileDateFormat))
+            foreach (var logFile in GetFilesToDownload(sourceDirectory, _conf.LastDownloadDate, _conf.FileDateFormat).Where(l => l.Exists))
             {
                 logFile.CopyTo(Path.Combine(_directory.FullName, logFile.Name), true);
                 downloadSize += logFile.Length;
@@ -73,11 +73,7 @@ namespace LogRaider
             var currentDate = lastDownloadDate.Date;
             while (currentDate < DateTime.Today)
             {
-                var logFile = new FileInfo(Path.Combine(sourceDirectory.FullName, currentDate.ToString(fileDateFormat)));
-                if (logFile.Exists)
-                {
-                    yield return logFile;
-                }
+                yield return new FileInfo(Path.Combine(sourceDirectory.FullName, currentDate.ToString(fileDateFormat)));
 
                 currentDate = currentDate.AddDays(1);
             }
