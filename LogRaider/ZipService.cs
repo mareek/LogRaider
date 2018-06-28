@@ -4,20 +4,28 @@ using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace LogRaider
 {
     public class ZipService
     {
-        public void CompressDirectoryParallel(DirectoryInfo logDirectory)
+        public long CompressDirectoryParallel(DirectoryInfo logDirectory)
         {
+            long zipedFileSize = 0; ;
             var filesByArchive = logDirectory.EnumerateFiles().Where(IsArchiveLogFile).GroupBy(GetArchivePath);
-            Parallel.ForEach(filesByArchive, fileGroup => AddFilesToArchiveAndDelete(new FileInfo(fileGroup.Key), fileGroup.ToList()));
+            Parallel.ForEach(filesByArchive,
+                             () => 0L,
+                             (fileGroup, loupState, subTotal) => subTotal + AddFilesToArchiveAndDelete(new FileInfo(fileGroup.Key), fileGroup.ToList()),
+                             finalResult => Interlocked.Add(ref zipedFileSize, finalResult));
+            return zipedFileSize;
+
         }
 
-        private void AddFilesToArchiveAndDelete(FileInfo archiveFile, IList<FileInfo> logFiles)
+        private long AddFilesToArchiveAndDelete(FileInfo archiveFile, IList<FileInfo> logFiles)
         {
+            long zipedFileSize = 0;
             if (!archiveFile.Exists)
             {
                 CreateArchive(archiveFile);
@@ -29,6 +37,7 @@ namespace LogRaider
                 {
                     if (zipArchive.Entries.All(e => e.FullName != logFile.Name))
                     {
+                        zipedFileSize += logFile.Length;
                         zipArchive.CreateEntryFromFile(logFile.FullName, logFile.Name, CompressionLevel.Optimal);
                     }
                 }
@@ -38,6 +47,8 @@ namespace LogRaider
             {
                 logFile.Delete();
             }
+
+            return zipedFileSize;
         }
 
         private void CreateArchive(FileInfo archiveFile) => ZipFile.Open(archiveFile.FullName, ZipArchiveMode.Create).Dispose();

@@ -35,13 +35,14 @@ namespace LogRaider
 
         private bool DefaultFilter(LogEntry _) => true;
 
-        public void Download()
+        public long Download()
         {
+            long downloadSize;
             var source = _conf.Source;
             switch (source.Type)
             {
                 case LogSource.PathType.File:
-                    DownloadFromDirectory();
+                    downloadSize = DownloadFromDirectory();
                     break;
                 case LogSource.PathType.Url:
                 default:
@@ -50,15 +51,21 @@ namespace LogRaider
 
             _conf.LastDownloadDate = DateTime.Today;
             SaveConf();
+
+            return downloadSize;
         }
 
-        private void DownloadFromDirectory()
+        private long DownloadFromDirectory()
         {
+            long downloadSize = 0;
             var sourceDirectory = new DirectoryInfo(_conf.Source.Path);
             foreach (var logFile in GetFilesToDownload(sourceDirectory, _conf.LastDownloadDate, _conf.FileDateFormat))
             {
                 logFile.CopyTo(Path.Combine(_directory.FullName, logFile.Name), true);
+                downloadSize += logFile.Length;
             }
+
+            return downloadSize;
         }
 
         private IEnumerable<FileInfo> GetFilesToDownload(DirectoryInfo sourceDirectory, DateTime lastDownloadDate, string fileDateFormat)

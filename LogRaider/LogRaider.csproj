@@ -130,7 +130,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="MemoryEntry.cs" />
-    <Compile Include="PricingCacheAnalysis.cs" />
+    <Compile Include="Analysis\PricingCacheAnalysis.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -16,6 +17,8 @@ namespace LogRaider
     /// </summary>
     public partial class MainWindow : Window
     {
+        private const int Mega = 1024 * 1024;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -99,27 +102,44 @@ namespace LogRaider
             await ExecuteTimedLongTask($"Début [{analysis.Name}] dans {SelectedDirectory.Name}...",
                                        "Temps de calcul",
                                        () => AnalyseDirectory(analysis));
-            WriteLineToConsole($"Taille totale des logs : {SelectedLogDirectory.GetSize() / (1024 * 1024)} MB");
+            WriteLineToConsole($"Taille totale des logs : {SelectedLogDirectory.GetSize() / Mega} MB");
         }
 
-        private async Task DownloadDirectory() => await ExecuteTimedLongTask($"Début du téléchargement de {SelectedDirectory.Name} ...",
-                                                                             "Temps de téléchargement",
-                                                                             SelectedLogDirectory.Download);
+        private async Task DownloadDirectory()
+        {
+            var downloadSize = await ExecuteTimedLongTask($"Début du téléchargement de {SelectedDirectory.Name} ...",
+                                                          "Temps de téléchargement",
+                                                          SelectedLogDirectory.Download);
+            WriteLineToConsole($"Taille des fichiers téléchargés : {downloadSize / Mega} MB");
+        }
 
-        private async Task CompressDirectory() => await ExecuteTimedLongTask($"Début de la compression de {SelectedDirectory.Name} ...",
-                                                                             "Temps de compression",
-                                                                             () => new ZipService().CompressDirectoryParallel(SelectedDirectory));
+        private async Task CompressDirectory()
+        {
+            var compressedSize = await ExecuteTimedLongTask($"Début de la compression de {SelectedDirectory.Name} ...",
+                                                            "Temps de compression",
+                                                            () => new ZipService().CompressDirectoryParallel(SelectedDirectory));
+
+            WriteLineToConsole($"Taille des fichiers compressés : {compressedSize / Mega} MB");
+
+            // The Compression process can allocate huge chunks of memory so we release it after
+            GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
+        }
 
         private async Task ExecuteTimedLongTask(string startMessage, string endMessage, Action longTask)
-            => await ExecuteTimedLongTask(startMessage, endMessage, () => Task.Run(longTask));
+            => await ExecuteTimedLongTaskInternal(startMessage, endMessage, () => Task.Run(() => { longTask(); return 0; }));
 
-        private async Task ExecuteTimedLongTask(string startMessage, string endMessage, Func<Task> longTask)
+        private async Task<T> ExecuteTimedLongTask<T>(string startMessage, string endMessage, Func<T> longTask)
+            => await ExecuteTimedLongTaskInternal(startMessage, endMessage, () => Task.Run(longTask));
+
+        private async Task<T> ExecuteTimedLongTaskInternal<T>(string startMessage, string endMessage, Func<Task<T>> longTask)
         {
             WriteLineToConsole(startMessage);
             var chrono = Stopwatch.StartNew();
-            await longTask();
+            var result = await longTask();
             chrono.Stop();
             WriteLineToConsole($"{endMessage} : {chrono.Elapsed}");
+            return result;
         }
 
         private void AnalyseDirectory(ILogAnalysis analysis)
@@ -149,25 +169,5 @@ namespace LogRaider
         private void SetOutput(string text) => Dispatcher.Invoke(() => txtOutput.Text = text);
 
         private string ShowCacheAnalysis(IEnumerable<LogEntry> logEntries) => CountResult.FormatResult(new PricingCacheAnalysis().GetCacheUsageDurations(logEntries).ToList());
-
-        private string ShowAppelsWebService(IEnumerable<LogEntry> logEntries) => CountResult.FormatResult(GetAppelsWebService(logEntries).ToList());
-
-        private string ShowAppelsWebServiceByHour(IEnumerable<LogEntry> logEntries) => CountResult.FormatResult(GetAppelsWebServiceByHour(logEntries).ToList());
-
-        private IEnumerable<CountResult> GetLogLineByHour(IEnumerable<LogEntry> logEntries, Func<LogEntry, bool> filter)
-        {
-            var countByHeure = logEntries.Where(filter).ToLookup(logEntry => logEntry.DateTime.Hour);
-            return Enumerable.Range(0, 24).Select(h => new CountResult(h.ToString("00"), countByHeure[h].Count()));
-        }
-
-        private IEnumerable<CountResult> GetAppelsWebService(IEnumerable<LogEntry> logEntries)
-        {
-            return from logEntry in logEntries
-                   where logEntry.Message.StartsWith("Appel ", StringComparison.OrdinalIgnoreCase)
-                   group logEntry by logEntry.Message.Substring(6).Split('(').First() into messageGroup
-                   select CountResult.FromGrouping(messageGroup);
-        }
-
-        private IEnumerable<CountResult> GetAppelsWebServiceByHour(IEnumerable<LogEntry> logEntries) => GetLogLineByHour(logEntries, l => l.Message.StartsWith("Appel "));
     }
 }
