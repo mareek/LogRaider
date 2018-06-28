@@ -116,9 +116,9 @@ namespace LogRaider.Analysis
             private TimeSpan DebutCalculDuration => (FinCalculArenh - DebutCalculPricing);
 
             public bool IsValidPricingNome => !string.IsNullOrEmpty(GroupId)
-                                    && DebutCalculArenh != default
-                                    && FinCalculArenh != default
-                                    && _idTraitementsPricingNome.Contains(TraitementId);
+                                              && DebutCalculArenh != default
+                                              && FinCalculArenh != default
+                                              && _idTraitementsPricingNome.Contains(TraitementId);
 
             public string ToCsvLine() => string.Join("\t", TraitementId, GroupId, ProfilId, ArenhDuration.TotalSeconds, DebutCalculDuration.TotalSeconds);
 

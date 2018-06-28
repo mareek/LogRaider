@@ -21,6 +21,12 @@ namespace LogRaider
             InitializeComponent();
         }
 
+        private LogDirectory SelectedLogDirectory => new LogDirectory(SelectedDirectory);
+
+        private DirectoryInfo SelectedDirectory => new DirectoryInfo(GetSelectedDirectoryPath());
+
+        private string GetSelectedDirectoryPath() => Dispatcher.Invoke(() => txtFolder.Text);
+
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             txtFolder.Text = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
@@ -40,9 +46,32 @@ namespace LogRaider
             }
         }
 
-        private async void btnLaunch_Click(object sender, RoutedEventArgs e) => await ExecuteAnalysis();
+        private async void btnLaunch_Click(object sender, RoutedEventArgs e) => await ExecuteLongAction(ShowAnalysisResult);
 
-        private Task ExecuteAnalysis() => ExecuteLongAction(() => ShowAnalysisResult(new DirectoryInfo(txtFolder.Text), GetAnalysis()));
+        private async void btnDownload_Click(object sender, RoutedEventArgs e) => await ExecuteLongAction(DownloadAndCompressDirectory);
+
+        private async Task ExecuteLongAction(Func<Task> longAction)
+        {
+            IsEnabled = false;
+            Mouse.OverrideCursor = Cursors.Wait;
+            try
+            {
+                SetOutput("");
+                WriteLineToConsole();
+                await longAction();
+            }
+            finally
+            {
+                Mouse.OverrideCursor = null;
+                IsEnabled = true;
+            }
+        }
+
+        private async Task DownloadAndCompressDirectory()
+        {
+            await DownloadDirectory();
+            await CompressDirectory();
+        }
 
         private ILogAnalysis GetAnalysis()
         {
@@ -64,60 +93,60 @@ namespace LogRaider
             }
         }
 
-        private async Task ShowAnalysisResult(DirectoryInfo directory, ILogAnalysis analysis)
+        private async Task ShowAnalysisResult()
         {
-            WriteLineToConsole("Début de la compression ...");
-            var chronoCompression = Stopwatch.StartNew();
-            var zipService = new ZipService();
-            await Task.Run(() => zipService.CompressDirectoryParallel(directory));
-            chronoCompression.Stop();
-            WriteLineToConsole($"Temps de compression : {chronoCompression.Elapsed}");
-
-            WriteLineToConsole($"Début [{analysis.Name}] ...");
-
-            var chronoTraitement = Stopwatch.StartNew();
-            var logDirectory = new LogDirectory(directory);
-            txtOutput.Text = await Task.Run(() => AnalyseDirectory(analysis, logDirectory));
-            chronoTraitement.Stop();
-            WriteLineToConsole($"Temps de calcul : {chronoTraitement.Elapsed}");
-            WriteLineToConsole($"Taille totale des logs : {logDirectory.GetSize() / (1024 * 1024)} MB");
+            var analysis = GetAnalysis();
+            await ExecuteTimedLongTask($"Début [{analysis.Name}] dans {SelectedDirectory.Name}...",
+                                       "Temps de calcul",
+                                       () => AnalyseDirectory(analysis));
+            WriteLineToConsole($"Taille totale des logs : {SelectedLogDirectory.GetSize() / (1024 * 1024)} MB");
         }
 
-        private static string AnalyseDirectory(ILogAnalysis analysis, LogDirectory logDirectory)
+        private async Task DownloadDirectory() => await ExecuteTimedLongTask($"Début du téléchargement de {SelectedDirectory.Name} ...",
+                                                                             "Temps de téléchargement",
+                                                                             SelectedLogDirectory.Download);
+
+        private async Task CompressDirectory() => await ExecuteTimedLongTask($"Début de la compression de {SelectedDirectory.Name} ...",
+                                                                             "Temps de compression",
+                                                                             () => new ZipService().CompressDirectoryParallel(SelectedDirectory));
+
+        private async Task ExecuteTimedLongTask(string startMessage, string endMessage, Action longTask)
+            => await ExecuteTimedLongTask(startMessage, endMessage, () => Task.Run(longTask));
+
+        private async Task ExecuteTimedLongTask(string startMessage, string endMessage, Func<Task> longTask)
+        {
+            WriteLineToConsole(startMessage);
+            var chrono = Stopwatch.StartNew();
+            await longTask();
+            chrono.Stop();
+            WriteLineToConsole($"{endMessage} : {chrono.Elapsed}");
+        }
+
+        private void AnalyseDirectory(ILogAnalysis analysis)
         {
             IEnumerable<LogEntry> logEntries;
             if (analysis.CanBeParalelyzed)
             {
-                logEntries = logDirectory.ReadParallel(analysis.Filter);
+                logEntries = SelectedLogDirectory.ReadParallel(analysis.Filter);
             }
             else
             {
-                logEntries = logDirectory.ReadSequential(analysis.Filter);
+                logEntries = SelectedLogDirectory.ReadSequential(analysis.Filter);
             }
 
-            return analysis.AnalyseLogs(logEntries);
+            SetOutput(analysis.AnalyseLogs(logEntries));
         }
 
-        private void WriteLineToConsole(string line)
+        private void WriteLineToConsole(string line = "")
         {
-            txtConsole.Text = txtConsole.Text + line + "\r\n";
-            txtConsole.ScrollToEnd();
+            Dispatcher.Invoke(() =>
+            {
+                txtConsole.Text = txtConsole.Text + line + "\r\n";
+                txtConsole.ScrollToEnd();
+            });
         }
 
-        private async Task ExecuteLongAction(Func<Task> longAction)
-        {
-            IsEnabled = false;
-            Mouse.OverrideCursor = Cursors.Wait;
-            try
-            {
-                await longAction();
-            }
-            finally
-            {
-                Mouse.OverrideCursor = null;
-                IsEnabled = true;
-            }
-        }
+        private void SetOutput(string text) => Dispatcher.Invoke(() => txtOutput.Text = text);
 
         private string ShowCacheAnalysis(IEnumerable<LogEntry> logEntries) => CountResult.FormatResult(new PricingCacheAnalysis().GetCacheUsageDurations(logEntries).ToList());
 

@@ -28,7 +28,14 @@
                     </RadioButton>
                 </StackPanel>
             </GroupBox>
-            <Button Name="btnLaunch" Click="btnLaunch_Click" IsDefault="True">Launch Analysis</Button>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="3*"/>
+                    <ColumnDefinition Width="1*"/>
+                </Grid.ColumnDefinitions>
+                <Button Name="btnLaunch" Click="btnLaunch_Click" IsDefault="True" Grid.Column="0">Launch Analysis</Button>
+                <Button Name="btnDownload" Click="btnDownload_Click" Grid.Column="1">Download</Button>
+            </Grid>
             <Label>Console :</Label>
             <TextBox Name="txtConsole" FontFamily="Consolas" VerticalScrollBarVisibility="Visible" Height="60" />
             <Label>Output :</Label>
