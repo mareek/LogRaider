@@ -86,10 +86,6 @@ namespace LogRaider
             {
                 return new SimpleTextSearchAnalysis(txtSearch.Text, chkFullMessageSearch.IsChecked.GetValueOrDefault());
             }
-            else if (radioCalculArenhAnalysis.IsChecked.GetValueOrDefault())
-            {
-                return new CalculArenhAnalysis();
-            }
             else
             {
                 throw new ArgumentOutOfRangeException("aucune analyse sélectionnée");
