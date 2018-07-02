@@ -11,13 +11,19 @@ namespace LogRaider
         private readonly LogConfiguration _conf;
         private readonly DirectoryInfo _directory;
 
-        private FileInfo ConfFile => new FileInfo(Path.Combine(_directory.FullName, "conf.xml"));
+        private FileInfo ConfFile => GetConfFile(_directory);
+
+        public string Name => _directory.Name;
 
         public LogDirectory(DirectoryInfo directory)
         {
             _directory = directory;
             _conf = LoadConf();
         }
+
+        public static bool IsLogDirectory(DirectoryInfo directory) => GetConfFile(directory).Exists;
+
+        private static FileInfo GetConfFile(DirectoryInfo directory) => new FileInfo(Path.Combine(directory.FullName, "conf.xml"));
 
         private LogConfiguration LoadConf() => ConfFile.Exists ? ConfFile.DeserializeFromXml<LogConfiguration>() : LogConfiguration.GetDefault();
 

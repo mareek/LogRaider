@@ -49,7 +49,7 @@ namespace LogRaider
             }
         }
 
-        private async void btnLaunch_Click(object sender, RoutedEventArgs e) => await ExecuteLongAction(ShowAnalysisResult);
+        private async void btnLaunch_Click(object sender, RoutedEventArgs e) => await ExecuteLongAction(() => ShowAnalysisResult(GetAnalysis(), SelectedLogDirectory));
 
         private async void btnDownload_Click(object sender, RoutedEventArgs e) => await ExecuteLongAction(DownloadAndCompressDirectory);
 
@@ -72,8 +72,23 @@ namespace LogRaider
 
         private async Task DownloadAndCompressDirectory()
         {
-            await DownloadDirectory();
-            await CompressDirectory();
+            if (LogDirectory.IsLogDirectory(SelectedDirectory))
+            {
+                await DownloadAndCompressDirectory(SelectedDirectory);
+            }
+
+            foreach (var directory in SelectedDirectory.EnumerateDirectories("*", SearchOption.AllDirectories).Where(LogDirectory.IsLogDirectory))
+            {
+                await DownloadAndCompressDirectory(directory);
+                WriteLineToConsole();
+            }
+        }
+
+        private async Task DownloadAndCompressDirectory(DirectoryInfo directory)
+        {
+            var logDirectory = new LogDirectory(directory);
+            await DownloadDirectory(logDirectory);
+            await CompressDirectory(directory);
         }
 
         private ILogAnalysis GetAnalysis()
@@ -92,28 +107,27 @@ namespace LogRaider
             }
         }
 
-        private async Task ShowAnalysisResult()
+        private async Task ShowAnalysisResult(ILogAnalysis analysis, LogDirectory logDirectory)
         {
-            var analysis = GetAnalysis();
-            await ExecuteTimedLongTask($"Début [{analysis.Name}] dans {SelectedDirectory.Name}...",
+            await ExecuteTimedLongTask($"Début [{analysis.Name}] dans {logDirectory.Name}...",
                                        "Temps de calcul",
                                        () => AnalyseDirectory(analysis));
-            WriteLineToConsole($"Taille totale des logs : {SelectedLogDirectory.GetSize() / Mega} MB");
+            WriteLineToConsole($"Taille totale des logs : {logDirectory.GetSize() / Mega} MB");
         }
 
-        private async Task DownloadDirectory()
+        private async Task DownloadDirectory(LogDirectory logDirectory)
         {
-            var downloadSize = await ExecuteTimedLongTask($"Début du téléchargement de {SelectedDirectory.Name} ...",
+            var downloadSize = await ExecuteTimedLongTask($"Début du téléchargement de {logDirectory.Name} ...",
                                                           "Temps de téléchargement",
-                                                          SelectedLogDirectory.Download);
+                                                          logDirectory.Download);
             WriteLineToConsole($"Taille des fichiers téléchargés : {downloadSize / Mega} MB");
         }
 
-        private async Task CompressDirectory()
+        private async Task CompressDirectory(DirectoryInfo directory)
         {
-            var compressedSize = await ExecuteTimedLongTask($"Début de la compression de {SelectedDirectory.Name} ...",
+            var compressedSize = await ExecuteTimedLongTask($"Début de la compression de {directory.Name} ...",
                                                             "Temps de compression",
-                                                            () => new ZipService().CompressDirectoryParallel(SelectedDirectory));
+                                                            () => new ZipService().CompressDirectoryParallel(directory));
 
             WriteLineToConsole($"Taille des fichiers compressés : {compressedSize / Mega} MB");
 
