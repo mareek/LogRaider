@@ -18,6 +18,7 @@
             <GroupBox Header="Analyse">
                 <StackPanel>
                     <RadioButton Name="radioMemoryAnalysis" IsChecked="True">Memoire</RadioButton>
+                    <RadioButton Name="radioErrorsAnalysis">Erreurs</RadioButton>
                     <RadioButton Name="radioSearchAnalysis" HorizontalContentAlignment="Stretch">
                         <DockPanel>
                             <TextBlock VerticalAlignment="Center">Recherche :</TextBlock>

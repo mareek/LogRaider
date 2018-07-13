@@ -97,6 +97,10 @@ namespace LogRaider
             {
                 return new MemoryAnalysis();
             }
+            else if (radioErrorsAnalysis.IsChecked.GetValueOrDefault())
+            {
+                return new ErrorByCategoryAnalysis();
+            }
             else if (radioSearchAnalysis.IsChecked.GetValueOrDefault())
             {
                 return new SimpleTextSearchAnalysis(txtSearch.Text, chkFullMessageSearch.IsChecked.GetValueOrDefault());
